@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天应用 - 管理页面</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.0/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+        }
+        #left-panel, #right-panel {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #left-panel {
+            width: 60%;
+            margin-right: 20px;
+        }
+        #right-panel {
+            width: 35%;
+        }
+        .client-box {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+        }
+        #log-output {
+            border: 1px solid #ddd;
+            height: 200px;
+            overflow-y: scroll;
+            padding: 5px;
+        }
+        .form-control {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 左侧客户端区 -->
+<div id="left-panel">
+    <h2>已连接客户端</h2>
+    <div id="clients-container">
+        <p>尚未创建客户端</p>
+    </div>
+</div>
+
+<!-- 右侧控制面板 -->
+<div id="right-panel">
+    <h2>服务器控制面板</h2>
+    <p>当前在线客户端数量：<span id="connected-clients">0</span></p>
+    <button id="refresh-status" class="form-control">刷新状态</button>
+
+    <h3>模拟客户端控制</h3>
+    <p>创建虚拟客户端：</p>
+    <label for="client-number"></label><input type="number" id="client-number" placeholder="输入数量" style="width: 100px;" class="form-control">
+    <button id="create-clients" class="form-control">创建</button>
+    <br>
+
+    <h3>消息日志</h3>
+    <div id="log-output"></div>
+</div>
+
+<script>
+    // WebSocket全局连接
+    const socket = io();
+    const clientsContainer = document.getElementById('clients-container');
+    const connectedClients = document.getElementById('connected-clients');
+    const logOutput = document.getElementById('log-output');
+    const refreshStatusBtn = document.getElementById('refresh-status');
+    const createClientsBtn = document.getElementById('create-clients');
+    const clientNumberInput = document.getElementById('client-number');
+
+    let clientCount = 0; // 客户端计数，生成唯一ID
+
+    // 刷新当前在线客户端状态
+    refreshStatusBtn.addEventListener('click', async () => {
+        const response = await fetch('/status');
+        const data = await response.json();
+        connectedClients.innerText = data.connected_clients;
+    });
+
+    // 创建指定数量的虚拟客户端
+    createClientsBtn.addEventListener('click', async () => {
+        const numClients = parseInt(clientNumberInput.value, 10);
+        if (!numClients || numClients <= 0) {
+            alert("请输入有效的客户端数量！");
+            return;
+        }
+
+        // 创建指定数量的客户端
+        for (let i = 0; i < numClients; i++) {
+            createClient();
+        }
+    });
+
+    // 创建单个客户端
+    function createClient() {
+        clientCount++;
+        const clientId = `client_${clientCount}`;
+
+        // 创建客户端DOM元素
+        const clientBox = document.createElement('div');
+        clientBox.className = 'client-box';
+        clientBox.id = clientId;
+        clientBox.innerHTML = `
+                <h4>客户端 - ${clientId}</h4>
+                <input type="text" id="${clientId}_username" placeholder="用户名" class="form-control">
+                <input type="text" id="${clientId}_message" placeholder="输入消息..." class="form-control">
+                <button id="${clientId}_send" class="form-control">发送</button>
+            `;
+        clientsContainer.appendChild(clientBox);
+
+        // 设置模拟客户端的WebSocket连接
+        const fakeSocket = io();
+
+        // 发送按钮功能
+        document.getElementById(`${clientId}_send`).addEventListener('click', () => {
+            const username = document.getElementById(`${clientId}_username`).value.trim();
+            const message = document.getElementById(`${clientId}_message`).value.trim();
+            if (!username || !message) {
+                alert("请输入用户名和消息！");
+                return;
+            }
+            fakeSocket.emit('send_message', { username, room: "default", message });
+            document.getElementById(`${clientId}_message`).value = ''; // 清空消息框
+        });
+
+        // 自动模拟该客户端加入默认房间
+        fakeSocket.emit('join_room', { username: `User_${clientCount}`, room: "default" });
+
+        // 接收服务器消息，更新到日志和当前客户端的输出
+        fakeSocket.on('message', (msg) => {
+            const log = document.createElement('div');
+            log.innerText = msg;
+            logOutput.appendChild(log);
+            logOutput.scrollTop = logOutput.scrollHeight; // 滚动到底部
+        });
+    }
+
+    // 接收通用的服务器消息
+    socket.on('message', (msg) => {
+        const log = document.createElement('div');
+        log.innerText = msg;
+        logOutput.appendChild(log);
+        logOutput.scrollTop = logOutput.scrollHeight; // 滚动到底部
+    });
+
+    // 初始化状态
+    refreshStatusBtn.click();
+</script>
+</body>
+</html>
