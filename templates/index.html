@@ -17,11 +17,11 @@
             border-radius: 5px;
         }
         #left-panel {
-            width: 60%;
+            width: 40%;
             margin-right: 20px;
         }
         #right-panel {
-            width: 35%;
+            width: 55%;
         }
         .client-box {
             margin-bottom: 10px;
@@ -66,7 +66,9 @@
     <div id="log-output"></div>
 </div>
 
-<script>
+<script type="module">
+    import { createClient } from './clientHandler.js';
+
     // WebSocket全局连接
     const socket = io();
     const clientsContainer = document.getElementById('clients-container');
@@ -95,53 +97,10 @@
 
         // 创建指定数量的客户端
         for (let i = 0; i < numClients; i++) {
-            createClient();
+            clientCount++;
+            createClient(clientCount, clientsContainer, io, logOutput);
         }
     });
-
-    // 创建单个客户端
-    function createClient() {
-        clientCount++;
-        const clientId = `client_${clientCount}`;
-
-        // 创建客户端DOM元素
-        const clientBox = document.createElement('div');
-        clientBox.className = 'client-box';
-        clientBox.id = clientId;
-        clientBox.innerHTML = `
-                <h4>客户端 - ${clientId}</h4>
-                <input type="text" id="${clientId}_username" placeholder="用户名" class="form-control">
-                <input type="text" id="${clientId}_message" placeholder="输入消息..." class="form-control">
-                <button id="${clientId}_send" class="form-control">发送</button>
-            `;
-        clientsContainer.appendChild(clientBox);
-
-        // 设置模拟客户端的WebSocket连接
-        const fakeSocket = io();
-
-        // 发送按钮功能
-        document.getElementById(`${clientId}_send`).addEventListener('click', () => {
-            const username = document.getElementById(`${clientId}_username`).value.trim();
-            const message = document.getElementById(`${clientId}_message`).value.trim();
-            if (!username || !message) {
-                alert("请输入用户名和消息！");
-                return;
-            }
-            fakeSocket.emit('send_message', { username, room: "default", message });
-            document.getElementById(`${clientId}_message`).value = ''; // 清空消息框
-        });
-
-        // 自动模拟该客户端加入默认房间
-        fakeSocket.emit('join_room', { username: `User_${clientCount}`, room: "default" });
-
-        // 接收服务器消息，更新到日志和当前客户端的输出
-        fakeSocket.on('message', (msg) => {
-            const log = document.createElement('div');
-            log.innerText = msg;
-            logOutput.appendChild(log);
-            logOutput.scrollTop = logOutput.scrollHeight; // 滚动到底部
-        });
-    }
 
     // 接收通用的服务器消息
     socket.on('message', (msg) => {
