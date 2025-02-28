@@ -17,7 +17,13 @@ using namespace std;
 #define DLEN 4
 typedef long long LL;
 
-class BigNum{
+#ifdef BUILD_DLL
+#define DLL_EXPORT __declspec(dllexport)
+#else
+#define DLL_EXPORT __declspec(dllimport)
+#endif
+
+class DLL_EXPORT BigNum {
 public:
     int a[500];// 可以控制大数的位数
     int len;// 大数长度
@@ -29,8 +35,8 @@ public:
     BigNum(const BigNum&);// 拷贝构造函数
 
     BigNum& operator=(const BigNum&);// 重载赋值运算符，大数之间进行赋值运算
-    friend istream& operator>>(istream&, BigNum&);// 重载输入运算符
-    friend ostream& operator<<(ostream&, BigNum&);// 重载输出运算符
+    friend DLL_EXPORT istream& operator>>(istream&, BigNum&);// 重载输入运算符
+    friend DLL_EXPORT ostream& operator<<(ostream&, BigNum&);// 重载输出运算符
 
     BigNum operator+(const BigNum&) const;// 重载加法运算符，两个大数之间的相加运算
     BigNum operator-(const BigNum&) const;// 重载减法运算符，两个大数之间的相减运算

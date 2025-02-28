@@ -84,11 +84,21 @@ Point EllipticCurve::multiplyPoint(Point &pa, int k){
     return res;
 }
 
-QStringList EllipticCurve::getParam(){
-    QStringList param;
-    param << QString::number(a) << QString::number(b) << QString::number(p)
-          << QString::number(G.x) << QString::number(G.y);
-    return  param;
+// QStringList EllipticCurve::getParam(){
+//     QStringList param;
+//     param << QString::number(a) << QString::number(b) << QString::number(p)
+//           << QString::number(G.x) << QString::number(G.y);
+//     return  param;
+// }
+
+std::vector<int> EllipticCurve::getParamList(){
+    std::vector<int> param;
+    param.push_back(a);
+    param.push_back(b);
+    param.push_back(p);
+    param.push_back(G.x);
+    param.push_back(G.y);
+    return param;
 }
 
 Point EllipticCurve::getPointG(){

@@ -4,11 +4,17 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
-#include <QStringList>
+#include <vector>
 #include "point.h"
 #include "codemath.h"
 
-class EllipticCurve {
+#ifdef BUILD_DLL
+#define DLL_EXPORT __declspec(dllexport)
+#else
+#define DLL_EXPORT __declspec(dllimport)
+#endif
+
+class DLL_EXPORT EllipticCurve {
 private:
     // y^2 = x^3 + ax + b, a, b ∈ Fp, (4a^3 + 27b^2) mod p != 0
     int a;
@@ -22,7 +28,7 @@ public:
     Point plusPoint(Point &pa, Point &pb);// Fp（素域）上的椭圆曲线群加法 Q=P1+P2
     Point minusPoint(Point &pa, Point &pb);// Fp（素域）上的椭圆曲线群减法 Q=P1-P2
     Point multiplyPoint(Point &pa, int k);// Fp（素域）上的椭圆曲线群乘法 Q=[k]P
-    QStringList getParam(void);
+    std::vector<int> getParamList(void);
     Point getPointG(void);
 };
 
